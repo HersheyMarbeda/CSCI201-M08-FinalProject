@@ -5,9 +5,11 @@
  *                                                                        *
  *   Instructor: Dr. Steve Carver                                         *
  *   Course: CSCI 201: Computer Science II                                *
+ *   School: Ivy Tech Community College-Terre Haute Campus                *
  *                                                                        *
  *   Purpose of the program: To manage an airline reservation system      *
  **************************************************************************/
+
 #include <iostream>
 #include <iomanip>
 #include <vector>
