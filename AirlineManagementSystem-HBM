@@ -1,0 +1,2411 @@
+/**************************************************************************
+ *   Program Name: Airline Management System (Final Project)              *
+ *   Author Name: Hershey Beatrice A. Marbeda                             *
+ *   Last Date Updated: 05.08.2024                                        *
+ *                                                                        *
+ *   Instructor: Dr. Steve Carver                                         *
+ *   Course: CSCI 201: Computer Science II                                *
+ *                                                                        *
+ *   Purpose of the program: To manage an airline reservation system      *
+ **************************************************************************/
+#include <iostream>
+#include <iomanip>
+#include <vector>
+#include <ctime>
+#include <cstdlib>
+#include <string>
+#include <stdexcept>
+#include <fstream>
+
+using namespace std;
+
+// Constants for discount percentages
+const double MILITARY_DISCOUNT = 0.15;
+const double STUDENT_DISCOUNT = 0.05;
+const double SENIOR_DISCOUNT = 0.15;
+const double INDIANA_STATE_TAX = 0.07;
+
+// Function to generate a random flight status
+string generateFlightStatus() 
+{
+    //Flight statuses
+    string statuses[] = {"On Time", "Delayed", "Boarding", "Departed", "Arrived"};
+
+    // Generate a random index within the range of the statuses array
+    int index = rand() % (sizeof(statuses) / sizeof(statuses[0]));
+
+    // Return the randomly selected flight status
+    return statuses[index];
+}
+
+
+// Function to generate a random flight number
+string generateFlightNumber()
+{
+    string flightNumber = "PR ";
+
+    
+    for (int i = 0; i < 3; ++i)
+    {
+        flightNumber += to_string(rand() % 10); // Append a random digit (0-9)
+    }
+    return flightNumber;
+}
+
+// Function to generate a random departure time
+string generateDepartureTime()
+{
+    int hour = rand() % 24;    // Random hour (0-23)
+    int minute = rand() % 60;  // Random minute (0-59)
+    return to_string(hour) + ":" + (minute < 10 ? "0" : "") + to_string(minute);
+}
+
+// Function to generate a random price
+double generatePrice()
+{
+    return (rand() % 2'000 + 1'000) * 1.0; // Random price between 1,000 and 3,000
+}
+
+int generateReceiptNumber()
+{
+    return (rand () % 100'000'000) * 1;
+}
+
+class Flight
+{
+private:
+    string flightNumber;
+    string origin;
+    string destination;
+    string departureTime;
+    double price;
+    int receipt;
+
+public:
+    // Constructor
+    Flight(string num, string orig, string dest, string time, double p, int r) : flightNumber(num), origin(orig), destination(dest), departureTime(time), price(p), receipt(r) {}
+
+    string getFlightNumber() const { return flightNumber; }
+    string getOrigin() const { return origin; }
+    string getDestination() const { return destination; }
+    string getDepartureTime() const { return departureTime; }
+    double getPrice() const { return price; }
+    int getReceipt() const { return receipt; }
+
+    // Calculate discounted price based on customer type
+    double getDiscountedPrice(const string &customerType) const
+    {
+        double discountedPrice = price; // Default to original price
+
+        if (customerType == "Military")
+        {
+            discountedPrice -= price * MILITARY_DISCOUNT;
+        }
+        
+        else if (customerType == "Student")
+        {
+            discountedPrice -= price * STUDENT_DISCOUNT;
+        }
+        
+        else if (customerType == "Senior Citizen")
+        {
+            discountedPrice -= price * SENIOR_DISCOUNT;
+        }
+
+        else if (customerType == "None")
+        {
+            discountedPrice = price;
+        }
+        
+        return discountedPrice;
+    }
+
+    // Set destination
+    void setDestination(const string &dest)
+    {
+        destination = dest;
+    }
+};
+
+
+
+class PersonalInformation
+{
+private:
+    string name;
+    string DateOfBirth;
+    string contactNumber;
+    int age;
+    Flight flight;
+
+public:
+    PersonalInformation(string n, string DOB, string c, Flight flight, int a) : name(n), age(a), flight(flight), DateOfBirth(DOB), contactNumber(c) {}
+
+    // Getter Methods
+    string getName() const { return name; }
+    string getDateOfBirth() const { return DateOfBirth; }
+    string getContactNumber() const { return contactNumber; }
+    int getAge() const { return age; }
+    Flight getFlight() const { return flight; }
+    
+    
+    // Setter methods
+   void setName(const string& newName) { name = newName; }
+   void setDateOfBirth(const string& newDOB) { DateOfBirth = newDOB; }
+   void setContactNumber(const string& newContactNumber) { contactNumber = newContactNumber; }
+   void setAge(int newAge) { age = newAge; }
+};
+
+
+
+class InternationalFlight : public Flight
+{
+private:
+    PersonalInformation customer;
+
+public:
+    InternationalFlight(string num, string orig, string time, double p, int r, PersonalInformation cust, int destinationChoice, float flightCost)
+        : Flight(num, orig, "", time, p, r), customer(cust)
+    {
+        // Set destination based on choice
+        switch (destinationChoice)
+        {
+        case 1:
+            setDestination("Tokyo, Japan");
+            flightCost = generatePrice();
+            break;
+                
+        case 2:
+            setDestination("Manila, Philippines");
+            flightCost = generatePrice();
+            break;
+                
+        case 3:
+            setDestination("Paris, France");
+            flightCost = generatePrice();
+            break;
+                
+        case 4:
+            setDestination("Seoul, South Korea");
+            flightCost = generatePrice();
+            break;
+                
+        case 5:
+            setDestination("Portofino, Italy");
+            flightCost = generatePrice();
+            break;
+                
+        case 6:
+            setDestination("Berlin, Germany");
+            flightCost = generatePrice();
+            break;
+                
+                
+        default:
+            // Invalid choice, set default destination
+            setDestination("Unknown");
+            break;
+        }
+    }
+};
+
+
+class DomesticFlight : public Flight
+{
+private:
+    PersonalInformation customer;
+
+public:
+    DomesticFlight(string num, string orig, string time, double p, int r, PersonalInformation cust, int destinationChoice, float flightCost)
+    : Flight(num, orig, "", time, p, r), customer(cust)
+    
+    
+    {
+        // Set destination based on choice
+        switch (destinationChoice)
+        {
+                
+        case 1:
+            setDestination("Los Angeles, CA");
+            flightCost = generatePrice();
+            break;
+                
+        case 2:
+            setDestination("San Francisco, CA");
+            flightCost = generatePrice();
+            break;
+                
+        case 3:
+            setDestination("New York City, NY");
+            flightCost = generatePrice();
+            break;
+                
+        case 4:
+            setDestination("Miami, Florida");
+            flightCost = generatePrice();
+            break;
+                
+        case 5:
+            setDestination("Honolulu, HI");
+            flightCost = generatePrice();
+            break;
+                
+                
+        default:
+            // Invalid choice, set default destination
+            setDestination("Unknown");
+            break;
+        }
+    }
+    
+};
+
+
+// Main Prompt
+int main()
+{
+    vector<PersonalInformation> passengers;
+
+    // Declaration of Local Variables
+    double totalPrice = 0.0, MilitaryDiscount = 0.0, IndianaStateTax = 0.0, StudentDiscount = 0.0, SeniorCitizenDiscount = 0.0;
+    int MenuChoice1, age = 0, TypeFlight, destination, numPassengers = 0, changeInfo = 0, FlightStatusNumber = 0;
+    string name, DateOfBirth, contactNumber, chosenDestination = " ", emailAD, flightNumber;
+    char discount, validateInformation;
+    
+    // Table Heading
+    cout << setw(85) << setfill('*') << "*" << endl
+         << "\t\t\t\t\t\tAirline Reservation Management System " << endl
+         << setw(85) << setfill('*') << "*" << endl
+    
+         // "Mabuhay" is a Filipino word that translates to "Long live" or "Welcome" in English.
+         << "Mabuhay! Get ready to explore the skies with our Flight Booking System! \n";
+
+  
+    
+    // ******************************************************************* To Format the Date *******************************************************************
+    // Get current time
+    time_t now = time(0);
+
+    // Convert now to tm struct for local timezone
+    tm *localTime = localtime(&now);
+
+    // Array of days and months
+    const char *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+    const char *months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
+
+    // Format the current date
+    char Date[50];
+    strftime(Date, sizeof(Date), "%A, %B %d, %Y", localTime);
+
+    // Format the current time
+    char timeFormat[10];
+    strftime(timeFormat, sizeof(timeFormat), "%H:%M", localTime);
+
+    // ******************************************************************* End of "To Format the Date" ***********************************************************
+    
+    
+    do
+    {
+        cout << "\nPlease choose the number you want to explore: \n"
+             << "1. Check Flight Status \n"
+             << "2. Make a booking reservation \n"
+             << "3. Explore Exclusive Flight Discounts \n"
+             << "4. Routes Available \n"
+             << "5. Exit the program \n"
+             << "Choice #: ";
+        cin >> MenuChoice1;
+            
+        
+            // Input Validation
+            while (cin.fail() || MenuChoice1 <= 0 || MenuChoice1 > 5)
+            {
+                cin.clear();
+                cin.ignore();
+                cout << "\nInvalid Choice. Please enter the number you want. \n"
+                     << "1. Check Flight Status \n"
+                     << "2. Make a booking reservation \n"
+                     << "3. Explore Exclusive Flight Discounts \n"
+                     << "4. Routes Available \n"
+                     << "5. Exit the program \n"
+                     << "Choice #: ";
+                cin >> MenuChoice1;
+            }
+        
+        
+        
+        // Start of main prompt
+        switch (MenuChoice1)
+        {
+// *************************************************************** MenuChoice1 case 1 ***************************************************************
+            case 1:
+            {
+                srand(time(nullptr));
+                
+                // Generate a random flight status
+                string randomFlightStatus = generateFlightStatus();
+                int GateNumber = 0;
+                
+                GateNumber = rand() % 36  ;
+                
+                cout << "\nFlight Status: \n"
+                     << "Enter the Flight Number: PR ";
+                cin >> FlightStatusNumber;
+                
+                cout << "\nFlight Status for Receipt PR " << FlightStatusNumber << ": " << randomFlightStatus
+                     << "\nGate No. " << GateNumber << endl << endl;
+
+                
+                break;
+            }
+// *************************************************************** MenuChoice1 case 1 ***************************************************************
+                
+// *************************************************************** MenuChoice1 case 2 ***************************************************************
+            case 2:
+            {
+                cout << "\nBooking Reservation: \n"
+                     << "International or Domestic Flight? (0 for International and 1 for Domestic): ";
+                cin >> TypeFlight;
+                
+                    // Input Validation
+                    while (cin.fail() || TypeFlight != 0 && TypeFlight != 1)
+                    {
+                        cin.clear();
+                        cin.ignore();
+                        cout << "\nInvalid Choice. Please enter the number you want. \n"
+                             << "International or Domestic Flight? (0 for International and 1 for Domestic): ";
+                        cin >> TypeFlight;
+                    }
+                
+                switch (TypeFlight)
+                {
+                    case 0:
+                    {
+                        cout << "\nInternational Flights: \n"
+                             << "Please choose the number of the flight you want: \n"
+                             << "1. Indianapolis, IN to Tokyo, Japan \n"
+                             << "2. Indianapolis, IN to Manila, Philippines \n"
+                             << "3. Indianapolis, IN to Paris, France \n"
+                             << "4. Indianapolis, IN to Seoul, South Korea \n"
+                             << "5. Indianapolis, IN to Portofino, Italy \n"
+                             << "6. Indianapolis, IN to Berlin, Germany \n"
+                             << "Choice #: ";
+                        cin >> destination;
+                        
+                        
+                            // Input Validation
+                            while (cin.fail() || destination < 0 && destination > 6 )
+                            {
+                                cin.clear();
+                                cin.ignore();
+                                cout << "\nInvalid Choice. Please enter the number you want. \n"
+                                     << "Choice #: ";
+                                cin >> destination ;
+                            }
+                        
+                        
+                        switch (destination)
+                        {
+                            case 1:
+                                chosenDestination = "Tokyo, Japan";
+                                break;
+                                
+                            case 2:
+                                chosenDestination = "Manila, Philippines";
+                                break;
+                                
+                            case 3:
+                                chosenDestination = "Paris, France";
+                                break;
+                                
+                            case 4:
+                                chosenDestination = "Seoul, South Korea";
+                                break;
+                                
+                            case 5:
+                                chosenDestination = "Portofino, Italy";
+                                break;
+                                
+                            case 6:
+                                chosenDestination = "Berlin, Germany";
+                                break;
+                                
+                            default:
+                                cout << "\nInvalid Choice. \n\n";
+                                break;
+                        }
+                        break;
+                    }
+                        
+                        
+                    case 1:
+                    {
+                        cout << "\nDomestic Flights: \n"
+                             << "Please choose the number of the flight you want: \n"
+                             << "1. Indianapolis, IN to Los Angeles, CA \n"
+                             << "2. Indianapolis, IN to San Francisco, CA \n"
+                             << "3. Indianapolis, IN to New York City, NY \n"
+                             << "4. Indianapolis, IN to Miami, Florida \n"
+                             << "5. Indianapolis, IN to Honolulu, HI \n"
+                             << "Choice #: ";
+                        cin >> destination;
+                        
+                        
+                            // Input Validation
+                            while (cin.fail() || destination < 0 || destination > 6 )
+                            {
+                                cin.clear();
+                                cin.ignore();
+                                cout << "\nInvalid Choice. Please enter the number you want. \n"
+                                     << "Choice #: ";
+                                cin >> destination ;
+                            }
+                        
+                        
+                        switch (destination)
+                        {
+                            case 1:
+                                chosenDestination = "Los Angeles, CA ";
+                                break;
+                                
+                            case 2:
+                                chosenDestination = "San Francisco, CA";
+                                break;
+                                
+                            case 3:
+                                chosenDestination = "New York City, NY";
+                                break;
+                                
+                            case 4:
+                                chosenDestination = "Miami, Florida";
+                                break;
+                                
+                            case 5:
+                                chosenDestination = "Honolulu, HI";
+                                break;
+                                
+                            default:
+                                cout << "\nInvalid Choice. \n\n";
+                                break;
+                        }
+                        
+                    }
+                        
+                }
+                
+                // Generate random flight details
+                string flightNumber = generateFlightNumber();
+                string departureTime = generateDepartureTime();
+                double price = generatePrice();
+                int receipt = generateReceiptNumber();
+                
+                // Flight object with details
+                Flight randomFlight(flightNumber, "Indianapolis, IN", chosenDestination, departureTime, price, receipt);
+                
+            
+                cout << "\nPlease enter your First and Last Name: ";
+                cin.ignore();
+                getline(cin, name);
+                
+                
+                try
+                {
+                    cout << "Please enter your Age: ";
+                    cin >> age;
+                    
+                    if (cin.fail() || age <= 0)
+                    {
+                        throw invalid_argument("Invalid age input");
+                    }
+                }
+                
+                catch(const exception& e)
+                {
+                    cerr << "\nAn exception occurred: " << e.what() << endl;
+                    
+                    return 1;
+                }
+                
+                
+                cout << "Please enter your Date of Birth (MM / DD / YYYY): ";
+                cin.ignore();
+                getline(cin, DateOfBirth);
+                
+                cout << "Please enter your Contact Number: ";
+                getline(cin, contactNumber);
+                
+                cout << "Please enter your Email Address: ";
+                getline(cin, emailAD);
+                
+                cout << "Number of Passengers, including you: ";
+                cin >> numPassengers;
+                
+                
+                // For Additional Passengers
+                if (numPassengers > 1)
+                {
+                    // Clear the input buffer before the loop
+                    cin.ignore();
+                    
+                    // Vectors to store the additional passenger's informations
+                    vector<string> passengerNames(numPassengers);
+                    vector<string> pasengerBirthdays(numPassengers);
+                    vector<int> passengerAges(numPassengers);
+                    
+                    // Store the main user's name as the first passenger's name
+                    passengerNames[0] = name;
+                    pasengerBirthdays[0] = DateOfBirth;
+                    
+                    for (int i = 1; i < numPassengers; i++)
+                    {
+                        cout << "\nPassenger " << (i + 1) << ": \n";
+                        cout << "First and Last Name: ";
+                        getline(cin, passengerNames[i]);
+                        
+                        // Exception Handling for Age
+                        try
+                        {
+                            cout << "Age: ";
+                            cin >> passengerAges[i];
+                            cin.ignore();
+                            
+                            if (cin.fail() || passengerAges[i] <= 0)
+                            {
+                                throw invalid_argument("Invalid age input");
+                            }
+                        }
+                        
+                        catch(const exception& e)
+                        {
+                            cerr << "\nAn exception occurred: " << e.what() << endl;
+                            
+                            return 1;
+                        }
+                        
+                        
+                        cout << "Date of Birth (MM / DD / YYYY): ";
+                        getline(cin, pasengerBirthdays[i]);
+                        
+                        // To save the additional passengers' informations back to the class PersonalInformation
+                        passengers.push_back(PersonalInformation(passengerNames[i], pasengerBirthdays[i], contactNumber, randomFlight, passengerAges[i]));
+                    }
+                }
+                
+                else
+                {
+                    // Only the user is traveling, so use the provided name, age, and date of birth
+                    passengers.push_back(PersonalInformation(name, DateOfBirth, contactNumber, randomFlight, age));
+                }
+                
+                // Formula to calculate the total flight cost including the number of
+                // passengers and random price generated
+                price = (price * numPassengers) ;
+                IndianaStateTax = (INDIANA_STATE_TAX * price);
+                totalPrice = price + IndianaStateTax;
+                
+                
+                cout << "\nDo you have a discount? \n"
+                     << "(M: Military, S: Student, D: Senior Citizen (Age 65 & up), (N for no): ";
+                cin >> discount;
+                
+                // To transform the input of lowercase to uppercase
+                discount = toupper(discount);
+                
+                
+                // Input Validation
+                while (cin.fail() || discount != 'M' && discount != 'S' && discount != 'D' && discount != 'N')
+                {
+                    cin.clear();
+                    cin.ignore();
+                    
+                    cout << "\nInvalid Value. Please try again..\n"
+                         << "\nDo you have a discount? \n"
+                         << "(M: Military, S: Student, D: Senior Citizen (Age 65 & up), (N for no): ";
+                    cin >> discount;
+                    
+                    // To transform the input of lowercase to uppercase
+                    discount = toupper(discount);
+                }
+                
+                
+                
+                
+                // Output booking details
+                cout << "\nBooking Details:\n"
+                     << Date << "  " << timeFormat << endl
+                     << setw(93) << setfill('*') << "*" << endl
+                     << "Flight Details:\n"
+                     << "Receipt No. " << randomFlight.getReceipt() << endl
+                     << "Flight Number: " << randomFlight.getFlightNumber() << "\t\t\t\t\tDeparture Time (24 hr): " << randomFlight.getDepartureTime() << " EST" << endl
+                     << "Origin: " << randomFlight.getOrigin() << "\t\t\t\tDestination: " << randomFlight.getDestination() << endl
+                     << "\nPrice per Passenger: $" << fixed << setprecision(2) << randomFlight.getPrice() << endl
+                     << "State Tax: " << fixed << setprecision(0) << INDIANA_STATE_TAX * 100 << "%" << endl;
+                
+                
+                    // Start of Discount types
+                    if (discount == 'M' )
+                    {
+                        // Formula to Calculate the total price with military discount
+                        MilitaryDiscount = (MILITARY_DISCOUNT * totalPrice);
+                        totalPrice = totalPrice - MilitaryDiscount;
+                        
+                        cout << "Discount Applied: Military: " << fixed << setprecision(0) << MILITARY_DISCOUNT * 100 << "%" << endl
+                             << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                    }
+                    
+                    else if (discount == 'S')
+                    {
+                        // Formula to Calculate the total price with student discount
+                        StudentDiscount = (STUDENT_DISCOUNT * totalPrice);
+                        totalPrice = totalPrice - StudentDiscount;
+                        
+                        
+                        cout << "Discount Applied: Student: " << fixed << setprecision(0) << STUDENT_DISCOUNT * 100 << "%" << endl
+                             << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                    }
+                    
+                    else if (discount == 'D')
+                    {
+                        // Formula to Calculate the total price with student discount
+                        SeniorCitizenDiscount = (SENIOR_DISCOUNT * totalPrice);
+                        totalPrice = totalPrice - SeniorCitizenDiscount;
+                        
+                        cout << "Discount Applied: Senior Citizen (Age 65 & up): " << fixed << setprecision(0) << SENIOR_DISCOUNT * 100 << "%" << endl
+                             << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                    }
+                    
+                    // If there's no dicount to apply
+                    else
+                    {
+                        cout << "Total Price: $" << totalPrice << endl;
+                    }
+                
+                
+                // Output passenger details
+                // Main Passenger's Informations
+                cout << "\n\nPassenger Details:\n"
+                     << "Passenger 1:\n"
+                     << "Name: " << name << endl
+                     << "Date of Birth (MM / DD / YYYY): " << DateOfBirth << endl
+                     << "Age: " << age << endl
+                     << "Contact Number: " << contactNumber << endl
+                     << "Email Address: " << emailAD << endl;
+                
+                
+                // Additional passengers
+                if (numPassengers > 1)
+                {
+                    for (int i = 0; i < passengers.size(); ++i)
+                    {
+                        cout << "\nPassenger " << (i + 2) << ":\n"
+                             << "Name: " << passengers[i].getName() << endl
+                             << "Date of Birth (MM / DD / YYYY): " << passengers[i].getDateOfBirth() << endl
+                             << "Age: " << passengers[i].getAge() << endl ;
+                    }
+                }
+                
+                cout << setw(93) << setfill('*') << "*" << endl << endl;
+                
+            
+                
+                cout << "Are the informations above accurate? (Y: yes & N: no): ";
+                cin >> validateInformation;
+                
+                
+                // To transform the lowercase input to uppercase
+                validateInformation = toupper(validateInformation);
+                
+                    // Input Validation
+                    while (cin.fail() || validateInformation != 'Y' && validateInformation != 'N')
+                    {
+                        cin.clear();
+                        cin.ignore();
+                        cout << "\nInvalid Choice. Please enter either Y for yes and N for no. \n"
+                             << "Are the informations above accurate?: ";
+                        cin >> validateInformation;
+                        
+                        validateInformation = toupper(validateInformation);
+                    }
+                
+                
+                
+            do
+              {
+                if (validateInformation == 'N')
+                {
+                    if (numPassengers == 1)
+                    {
+                        cout << "\nWhich one would you like to change?: \n"
+                             << "1. Passenger 1's Informations \n"
+                             << "2. Destination \n"
+                             << "3. Start Over \n"
+                             << "Choice #: ";
+                        cin >> changeInfo;
+                        
+                        
+                            // Input Validation
+                            while (cin.fail() || changeInfo < 1 || changeInfo > 3)
+                            {
+                                cin.clear();
+                                cin.ignore();
+                                cout << "\nInvalid Choice. Please enter the number you want to change. \n"
+                                << "1. Passenger 1's Informations \n"
+                                << "2. Destination \n"
+                                << "3. Start Over \n"
+                                << "Choice #: ";
+                                cin >> changeInfo;
+                            }
+                        
+                        
+                        switch (changeInfo)
+                        {
+                            case 1:
+                            {
+                                cout << "Please enter the updated information for Passenger 1:\n"
+                                     << "First and Last Name: ";
+                                cin.ignore();
+                                getline(cin, name);
+                                
+                                
+                                try
+                                {
+                                    cout << "Please enter your Age: ";
+                                    cin >> age;
+                                    
+                                    if (cin.fail() || age <= 0)
+                                    {
+                                        throw invalid_argument("Invalid age input");
+                                    }
+                                }
+                                
+                                catch(const exception& e)
+                                {
+                                    cerr << "\nAn exception occurred: " << e.what() << endl;
+                                    
+                                    return 1;
+                                }
+                                
+                                
+                                cout << "Date of Birth (MM / DD / YYYY): ";
+                                cin.ignore();
+                                getline(cin, DateOfBirth);
+                                
+                                
+                                cout << "Contact Number: ";
+                                cin.ignore();
+                                getline(cin, contactNumber);
+                                
+                                
+                                cout << "Email Address: ";
+                                cin.ignore();
+                                getline(cin, emailAD);
+                                
+                                
+                                // Update Passenger 1's information
+                                passengers[0] = PersonalInformation(name, DateOfBirth, contactNumber, randomFlight, age);
+                                
+                                cout << "Passenger 1's Information has been updated. \n\n";
+                                
+                                // Generate random flight details
+                                string flightNumber = generateFlightNumber();
+                                string departureTime = generateDepartureTime();
+                                double price = generatePrice();
+                                int receipt = generateReceiptNumber();
+                                
+                                
+                                // Flight object with details
+                                Flight randomFlight(flightNumber, "Indianapolis, IN", chosenDestination, departureTime, price, receipt);
+                                
+                                
+                                // Output booking details
+                                cout << "\nBooking Details:\n"
+                                     << Date << "  " << timeFormat << endl
+                                     << setw(93) << setfill('*') << "*" << endl
+                                     << "Flight Details:\n"
+                                     << "Receipt No. " << randomFlight.getReceipt() << endl
+                                     << "Flight Number: " << randomFlight.getFlightNumber() << "\t\t\t\t\tDeparture Time (24 hr): " << randomFlight.getDepartureTime() << " EST" << endl
+                                     << "Origin: " << randomFlight.getOrigin() << "\t\t\t\tDestination: " << randomFlight.getDestination() << endl
+                                     << "\nPrice per Passenger: $" << fixed << setprecision(2) << randomFlight.getPrice() << endl
+                                     << "State Tax: " << fixed << setprecision(0) << INDIANA_STATE_TAX * 100 << "%" << endl;
+                                
+                                
+                                
+                                // Start of Discount types
+                                if (discount == 'M' )
+                                {
+                                    // Formula to Calculate the total price with military discount
+                                    MilitaryDiscount = (MILITARY_DISCOUNT * totalPrice);
+                                    totalPrice = totalPrice - MilitaryDiscount;
+                                    
+                                    cout << "Discount Applied: Military: " << fixed << setprecision(0) << MILITARY_DISCOUNT * 100 << "%" << endl
+                                         << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                }
+                                
+                                else if (discount == 'S')
+                                {
+                                    // Formula to Calculate the total price with student discount
+                                    StudentDiscount = (STUDENT_DISCOUNT * totalPrice);
+                                    totalPrice = totalPrice - StudentDiscount;
+                                    
+                                    
+                                    cout << "Discount Applied: Student: " << fixed << setprecision(0) << STUDENT_DISCOUNT * 100 << "%" << endl
+                                         << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                }
+                                
+                                else if (discount == 'D')
+                                {
+                                    // Formula to Calculate the total price with student discount
+                                    SeniorCitizenDiscount = (SENIOR_DISCOUNT * totalPrice);
+                                    totalPrice = totalPrice - SeniorCitizenDiscount;
+                                    
+                                    cout << "Discount Applied: Senior Citizen (Age 65 & up): " << fixed << setprecision(0) << SENIOR_DISCOUNT * 100 << "%" << endl
+                                         << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                }
+                                
+                                
+                                
+                                // Output passenger details
+                                // Main Passenger's Informations
+                                cout << "\nPassenger Details:\n"
+                                     << "Passenger 1:\n"
+                                     << "Name: " << name << endl
+                                     << "Age: " << age << endl
+                                     << "Date of Birth (MM / DD / YYYY): " << DateOfBirth << endl
+                                     << "Contact Number: " << contactNumber << endl
+                                     << "Email Address: " << emailAD << endl;
+                                
+                                
+                                // Additional passengers
+                                if (numPassengers > 1)
+                                {
+                                    for (int i = 0; i < passengers.size(); ++i)
+                                    {
+                                        cout << "\nPassenger " << (i + 2) << ":\n"
+                                             << "Name: " << passengers[i].getName() << endl
+                                             << "Age: " << passengers[i].getAge() << endl
+                                             << "Date of Birth (MM / DD / YYYY): " << passengers[i].getDateOfBirth() << endl;
+                                    }
+                                }
+                                
+                                cout << setw(93) << setfill('*') << "*" << endl << endl;
+                                
+                                cout << "Are the informations above accurate? (Y: yes & N: no): ";
+                                cin >> validateInformation;
+                                
+                                validateInformation = toupper(validateInformation);
+                                
+                                    // Input Validation
+                                    while (cin.fail() || validateInformation != 'Y' && validateInformation != 'N')
+                                    {
+                                        cin.clear();
+                                        cin.ignore();
+                                        cout << "\nInvalid Choice. Please enter either Y for yes and N for no. \n"
+                                             << "Are the informations above accurate?: ";
+                                        cin >> validateInformation;
+                                        
+                                        validateInformation = toupper(validateInformation);
+                                    }
+                                
+                                
+                                
+                                if (validateInformation == 'Y')
+                                {
+                                    
+                                    // a file stream for writing
+                                    ofstream outputFile(name + "_Booking_Details.txt");
+
+                                    if (outputFile.is_open())
+                                    {
+                                        // Write booking details to the file
+                                        outputFile << "Booking Details:\n"
+                                                   << Date << "  " << timeFormat << endl
+                                                   << setw(93) << setfill('*') << "*" << endl
+                                                   << "Flight Details:\n"
+                                                   << "Receipt No. " << randomFlight.getReceipt() << endl
+                                                   << "Flight Number: " << randomFlight.getFlightNumber() << "\t\t\t\t\tDeparture Time (24 hr): " << randomFlight.getDepartureTime() << " EST" << endl
+                                                   << "Origin: " << randomFlight.getOrigin() << "\t\t\t\tDestination: " << randomFlight.getDestination() << endl
+                                                   << "\nPrice per Passenger: $" << fixed << setprecision(2) << randomFlight.getPrice() << endl
+                                                   << "State Tax: " << fixed << setprecision(0) << INDIANA_STATE_TAX * 100 << "%" << endl;
+
+                                        
+                                        // Start of Discount types
+                                        if (discount == 'M')
+                                        {
+                                            // Write military discount details
+                                            outputFile << "Discount Applied: Military: " << fixed << setprecision(0) << MILITARY_DISCOUNT * 100 << "%" << endl
+                                                       << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                        }
+                                        
+                                        else if (discount == 'S')
+                                        {
+                                            // Write student discount details
+                                            outputFile << "Discount Applied: Student: " << fixed << setprecision(0) << STUDENT_DISCOUNT * 100 << "%" << endl
+                                                       << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                        }
+                                        
+                                        else if (discount == 'D')
+                                        {
+                                            // Write senior citizen discount details
+                                            outputFile << "Discount Applied: Senior Citizen (Age 65 & up): " << fixed << setprecision(0) << SENIOR_DISCOUNT * 100 << "%" << endl
+                                                       << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                        }
+                                        
+                                        else
+                                        {
+                                            // Write total price without discount
+                                            outputFile << "Total Price: $" << totalPrice << endl;
+                                        }
+
+                                        // Write passenger details
+                                        // Main Passenger's Information
+                                        outputFile << "\n\nPassenger Details:\n"
+                                                   << "Passenger 1:\n"
+                                                   << "Name: " << name << endl
+                                                   << "Age: " << age << endl
+                                                   << "Date of Birth (MM / DD / YYYY): " << DateOfBirth << endl
+                                                   << "Contact Number: " << contactNumber << endl
+                                                   << "Email Address: " << emailAD << endl;
+
+                                        // Additional passengers
+                                        if (numPassengers > 1)
+                                        {
+                                            for (int i = 0; i < passengers.size(); ++i)
+                                            {
+                                                // Write additional passenger details
+                                                outputFile << "\nPassenger " << (i + 2) << ":\n"
+                                                           << "Name: " << passengers[i].getName() << endl
+                                                           << "Age: " << passengers[i].getAge() << endl
+                                                           << "Date of Birth (MM / DD / YYYY): " << passengers[i].getDateOfBirth() << endl;
+                                            }
+                                        }
+
+                                        outputFile << setw(93) << setfill('*') << "*" << endl << endl;
+
+                                        // Close the output file
+                                        outputFile.close();
+
+                                        cout << "\nBooking details have been written to " << name << "_Booking_Details.txt for Mr/Ms/Mrs." << name << endl
+                                             << "Thank you for choosing us and we'll see you again!\n";
+                                    }
+                                    
+                                    else
+                                    {
+                                        cout << "Unable to open file for writing." << endl;
+                                    }
+                                    
+                                    
+                                    continue;
+                                    
+                                }
+                                break;
+                            }
+                                
+                                
+                            // To change the destination
+                            case 2:
+                            {
+                                cout << "International or Domestic Flight? (0 for International and 1 for Domestic): ";
+                                cin >> TypeFlight;
+                                
+                                
+                                // Input Validation
+                                while (cin.fail() || TypeFlight != 0 && TypeFlight != 1)
+                                {
+                                    cin.clear();
+                                    cin.ignore();
+                                    cout << "\nInvalid Choice. Please enter the number you want. \n"
+                                         << "International or Domestic Flight? (0 for International and 1 for Domestic): ";
+                                    cin >> TypeFlight;
+                                }
+                                
+                                
+                                switch (TypeFlight)
+                                {
+                                    case 0:
+                                    {
+                                        cout << "\nInternational Flights: \n"
+                                             << "Please choose the number of the flight you want: \n"
+                                             << "1. Indianapolis, IN to Tokyo, Japan \n"
+                                             << "2. Indianapolis, IN to Manila, Philippines \n"
+                                             << "3. Indianapolis, IN to Paris, France \n"
+                                             << "4. Indianapolis, IN to Seoul, South Korea \n"
+                                             << "5. Indianapolis, IN to Portofino, Italy \n"
+                                             << "6. Indianapolis, IN to Berlin, Germany \n"
+                                             << "Choice #: ";
+                                        cin >> destination;
+                                        
+                                        
+                                            // Input Validation
+                                            while (cin.fail() || destination < 0 && destination > 6)
+                                            {
+                                                cin.clear();
+                                                cin.ignore();
+                                                cout << "\nInvalid value. Please try again... \n\n"
+                                                     << "International Flights: \n"
+                                                     << "Please choose the number of the flight you want: \n"
+                                                     << "1. Indianapolis, IN to Tokyo, Japan \n"
+                                                     << "2. Indianapolis, IN to Manila, Philippines \n"
+                                                     << "3. Indianapolis, IN to Paris, France \n"
+                                                     << "4. Indianapolis, IN to Seoul, South Korea \n"
+                                                     << "5. Indianapolis, IN to Portofino, Italy \n"
+                                                     << "6. Indianapolis, IN to Berlin, Germany \n"
+                                                     << "Choice #: ";
+                                                cin >> destination;
+                                            }
+                                        
+                                        
+                                        switch (destination)
+                                        {
+                                            case 1:
+                                                chosenDestination = "Tokyo, Japan";
+                                                break;
+                                                
+                                            case 2:
+                                                chosenDestination = "Manila, Philippines";
+                                                break;
+                                                
+                                            case 3:
+                                                chosenDestination = "Paris, France";
+                                                break;
+                                                
+                                            case 4:
+                                                chosenDestination = "Seoul, South Korea";
+                                                break;
+                                                
+                                            case 5:
+                                                chosenDestination = "Portofino, Italy";
+                                                break;
+                                                
+                                            case 6:
+                                                chosenDestination = "Berlin, Germany";
+                                                break;
+                                                
+                                            default:
+                                                cout << "\nInvalid Choice. \n\n";
+                                                break;
+                                        }
+                                        break;
+                                        
+                                    }
+                                        
+                                        
+                                        
+                                    case 1:
+                                    {
+                                        cout << "\nDomestic Flights: \n"
+                                             << "Please choose the number of the flight you want: \n"
+                                             << "1. Indianapolis, IN to Los Angeles, CA \n"
+                                             << "2. Indianapolis, IN to San Francisco, CA \n"
+                                             << "3. Indianapolis, IN to New York City, NY \n"
+                                             << "4. Indianapolis, IN to Miami, Florida \n"
+                                             << "5. Indianapolis, IN to Honolulu, HI \n"
+                                             << "Choice #: ";
+                                        cin >> destination;
+                                        
+                                        
+                                        // Input Validation
+                                        while (cin.fail() || destination < 1 && destination > 5)
+                                        {
+                                            cin.clear();
+                                            cin.ignore();
+                                            cout << "\nInvalid value. Please try again... \n\n"
+                                                 << "\nDomestic Flights: \n"
+                                                 << "Please choose the number of the flight you want: \n"
+                                                 << "1. Indianapolis, IN to Los Angeles, CA \n"
+                                                 << "2. Indianapolis, IN to San Francisco, CA \n"
+                                                 << "3. Indianapolis, IN to New York City, NY \n"
+                                                 << "4. Indianapolis, IN to Miami, Florida \n"
+                                                 << "5. Indianapolis, IN to Honolulu, HI \n"
+                                                 << "Choice #: ";
+                                            cin >> destination;
+                                            
+                                        }
+                                        
+                                        
+                                        switch (destination)
+                                        {
+                                            case 1:
+                                                chosenDestination = "Los Angeles, CA ";
+                                                break;
+                                                
+                                            case 2:
+                                                chosenDestination = "San Francisco, CA";
+                                                break;
+                                                
+                                            case 3:
+                                                chosenDestination = "New York City, NY";
+                                                break;
+                                                
+                                            case 4:
+                                                chosenDestination = "Miami, Florida";
+                                                break;
+                                                
+                                            case 5:
+                                                chosenDestination = "Honolulu, HI";
+                                                break;
+                                                
+                                            default:
+                                                cout << "\nInvalid Choice. \n\n";
+                                                break;
+                                        }
+                                        
+                                    }
+                                        
+                                        
+                                }
+                                
+                                // Generate random flight details
+                                string flightNumber = generateFlightNumber();
+                                string departureTime = generateDepartureTime();
+                                double price = generatePrice();
+                                int receipt = generateReceiptNumber();
+                                
+                                // Flight object with details
+                                Flight randomFlight(flightNumber, "Indianapolis, IN", chosenDestination, departureTime, price, receipt);
+                                
+                                
+                                // Output booking details
+                                cout << "\nBooking Details:\n"
+                                     << Date << "  " << timeFormat << endl
+                                     << setw(93) << setfill('*') << "*" << endl
+                                     << "Flight Details:\n"
+                                     << "Receipt No. " << randomFlight.getReceipt() << endl
+                                     << "Flight Number: " << randomFlight.getFlightNumber() << "\t\t\t\t\tDeparture Time (24 hr): " << randomFlight.getDepartureTime() << " EST" << endl
+                                     << "Origin: " << randomFlight.getOrigin() << "\t\t\t\tDestination: " << randomFlight.getDestination() << endl
+                                     << "\nPrice per Passenger: $" << fixed << setprecision(2) << randomFlight.getPrice() << endl
+                                     << "State Tax: " << fixed << setprecision(0) << INDIANA_STATE_TAX * 100 << "%" << endl;
+                                
+                                
+                                // Start of Discount types
+                                if (discount == 'M' )
+                                {
+                                    // Formula to Calculate the total price with military discount
+                                    MilitaryDiscount = (MILITARY_DISCOUNT * totalPrice);
+                                    totalPrice = totalPrice - MilitaryDiscount;
+                                    
+                                    cout << "Discount Applied: Military: " << fixed << setprecision(0) << MILITARY_DISCOUNT * 100 << "%" << endl
+                                         << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                }
+                                
+                                else if (discount == 'S')
+                                {
+                                    // Formula to Calculate the total price with student discount
+                                    StudentDiscount = (STUDENT_DISCOUNT * totalPrice);
+                                    totalPrice = totalPrice - StudentDiscount;
+                                    
+                                    
+                                    cout << "Discount Applied: Student: " << fixed << setprecision(0) << STUDENT_DISCOUNT * 100 << "%" << endl
+                                         << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                }
+                                
+                                else if (discount == 'D')
+                                {
+                                    // Formula to Calculate the total price with senior discount
+                                    SeniorCitizenDiscount = (SENIOR_DISCOUNT * totalPrice);
+                                    totalPrice = totalPrice - SeniorCitizenDiscount;
+                                    
+                                    cout << "Discount Applied: Senior Citizen (Age 65 & up): " << fixed << setprecision(0) << SENIOR_DISCOUNT * 100 << "%" << endl
+                                         << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                }
+                                
+                                // If there's no dicount to apply
+                                else
+                                {
+                                    cout << "Total Price: $" << totalPrice << endl;
+                                }
+                                
+                                
+                                // Output passenger details
+                                // Main Passenger's Informations
+                                cout << "\n\nPassenger Details:\n"
+                                     << "Passenger 1:\n"
+                                     << "Name: " << name << endl
+                                     << "Age: " << age << endl
+                                     << "Date of Birth (MM / DD / YYYY): " << DateOfBirth << endl
+                                     << "Contact Number: " << contactNumber << endl
+                                     << "Email Address: " << emailAD << endl;
+                                
+                                
+                                // Additional passengers
+                                if (numPassengers > 1)
+                                {
+                                    for (int i = 0; i < passengers.size(); ++i)
+                                    {
+                                        cout << "\nPassenger " << (i + 2) << ":\n"
+                                             << "Name: " << passengers[i].getName() << endl
+                                             << "Age: " << passengers[i].getAge() << endl
+                                             << "Date of Birth (MM / DD / YYYY): " << passengers[i].getDateOfBirth() << endl;
+                                    }
+                                }
+                                
+                                cout << setw(93) << setfill('*') << "*" << endl << endl;
+                                
+                                
+                                cout << "Are the informations above accurate? (Y: yes & N: no): ";
+                                cin >> validateInformation;
+                                
+                                validateInformation = toupper(validateInformation);
+                                
+                                    // Input Validation
+                                    while (cin.fail() || validateInformation != 'Y' && validateInformation != 'N')
+                                    {
+                                        cin.clear();
+                                        cin.ignore();
+                                        cout << "\nInvalid Choice. Please enter either Y for yes and N for no. \n"
+                                             << "Are the informations above accurate?: ";
+                                        cin >> validateInformation;
+                                        
+                                        validateInformation = toupper(validateInformation);
+                                    }
+                                
+                                
+                                if (validateInformation == 'Y')
+                                {
+                                    
+                                    // a file stream for writing
+                                    ofstream outputFile(name + "_Booking_Details.txt");
+
+                                    if (outputFile.is_open())
+                                    {
+                                        // Write booking details to the file
+                                        outputFile << "Booking Details:\n"
+                                                   << Date << "  " << timeFormat << endl
+                                                   << setw(93) << setfill('*') << "*" << endl
+                                                   << "Flight Details:\n"
+                                                   << "Receipt No. " << randomFlight.getReceipt() << endl
+                                                   << "Flight Number: " << randomFlight.getFlightNumber() << "\t\t\t\t\tDeparture Time (24 hr): " << randomFlight.getDepartureTime() << " EST" << endl
+                                                   << "Origin: " << randomFlight.getOrigin() << "\t\t\t\tDestination: " << randomFlight.getDestination() << endl
+                                                   << "\nPrice per Passenger: $" << fixed << setprecision(2) << randomFlight.getPrice() << endl
+                                                   << "State Tax: " << fixed << setprecision(0) << INDIANA_STATE_TAX * 100 << "%" << endl;
+
+                                        
+                                        // Start of Discount types
+                                        if (discount == 'M')
+                                        {
+                                            // Write military discount details
+                                            outputFile << "Discount Applied: Military: " << fixed << setprecision(0) << MILITARY_DISCOUNT * 100 << "%" << endl
+                                                       << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                        }
+                                        
+                                        else if (discount == 'S')
+                                        {
+                                            // Write student discount details
+                                            outputFile << "Discount Applied: Student: " << fixed << setprecision(0) << STUDENT_DISCOUNT * 100 << "%" << endl
+                                                       << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                        }
+                                        
+                                        else if (discount == 'D')
+                                        {
+                                            // Write senior citizen discount details
+                                            outputFile << "Discount Applied: Senior Citizen (Age 65 & up): " << fixed << setprecision(0) << SENIOR_DISCOUNT * 100 << "%" << endl
+                                                       << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                        }
+                                        
+                                        else
+                                        {
+                                            // Write total price without discount
+                                            outputFile << "Total Price: $" << totalPrice << endl;
+                                        }
+
+                                        // Write passenger details
+                                        // Main Passenger's Information
+                                        outputFile << "\n\nPassenger Details:\n"
+                                                   << "Passenger 1:\n"
+                                                   << "Name: " << name << endl
+                                                   << "Age: " << age << endl
+                                                   << "Date of Birth (MM / DD / YYYY): " << DateOfBirth << endl
+                                                   << "Contact Number: " << contactNumber << endl
+                                                   << "Email Address: " << emailAD << endl;
+
+                                        // Additional passengers
+                                        if (numPassengers > 1)
+                                        {
+                                            for (int i = 0; i < passengers.size(); ++i)
+                                            {
+                                                // Write additional passenger details
+                                                outputFile << "\nPassenger " << (i + 2) << ":\n"
+                                                           << "Name: " << passengers[i].getName() << endl
+                                                           << "Age: " << passengers[i].getAge() << endl
+                                                           << "Date of Birth (MM / DD / YYYY): " << passengers[i].getDateOfBirth() << endl;
+                                            }
+                                        }
+
+                                        outputFile << setw(93) << setfill('*') << "*" << endl << endl;
+
+                                        // Close the output file
+                                        outputFile.close();
+
+                                        cout << "\nBooking details have been written to " << name << "_Booking_Details.txt for Mr/Ms/Mrs." << name << endl
+                                             << "Thank you for choosing us and we'll see you again!\n";
+                                    }
+                                    
+                                    else
+                                    {
+                                        cout << "Unable to open file for writing." << endl;
+                                    }
+                                    
+                                    
+                                    continue;
+                                    
+                                }
+                                
+                                break;
+                            }
+                                
+                            default:
+                                cout << "\nInvalid Choice.";
+                                break;
+                        }
+                        
+                        
+                        
+                    }
+                    
+            // This would prompt out if there are 2 or more passengers including the main passenger
+                    else if (numPassengers > 1)
+                    {
+                        cout << "Which one would you like to change?: \n"
+                             << "1. Passenger 1's Informations \n"
+                             << "2. Additional Passenger \n"
+                             << "3. Destination \n"
+                             << "4. Start Over \n"
+                             << "Choice #: ";
+                        cin >> changeInfo;
+                        
+                        
+                        // Input Validation
+                        while (cin.fail() || changeInfo < 1 && changeInfo > 4)
+                        {
+                            cin.clear();
+                            cin.ignore();
+                            cout << "\nInvalid Choice. Please enter the number you want to change. \n"
+                                 << "1. Passenger 1's Informations \n"
+                                 << "2. Additional Passenger \n"
+                                 << "3. Destination \n"
+                                 << "4. Start Over \n"
+                                 << "Choice #: ";
+                            cin >> changeInfo;
+                         }
+                        
+                        
+                        switch (changeInfo)
+                        {
+                            case 1:
+                            {
+                                cout << "Please enter the updated information for Passenger 1:\n";
+                                cout << "Name: ";
+                                cin.ignore();
+                                getline(cin, name);
+                                
+                                
+                                try
+                                {
+                                    cout << "Please enter your Age: ";
+                                    cin >> age;
+                                    
+                                    if (cin.fail() || age <= 0)
+                                    {
+                                        throw invalid_argument("Invalid age input");
+                                    }
+                                }
+                                
+                                catch(const exception& e)
+                                {
+                                    cerr << "\nAn exception occurred: " << e.what() << endl;
+                                    
+                                    return 1;
+                                }
+                                
+                                
+                                cout << "Date of Birth (MM / DD / YYYY): ";
+                                cin.ignore();
+                                getline(cin, DateOfBirth);
+                                
+                                
+                                cout << "Contact Number: ";
+                                cin.ignore();
+                                getline(cin, contactNumber);
+                                
+                                
+                                cout << "Email Address: ";
+                                cin.ignore();
+                                getline(cin, emailAD);
+                                
+                                
+                                // Update Passenger 1's information
+                                passengers[0] = PersonalInformation(name, DateOfBirth, contactNumber, randomFlight, age);
+                                
+                                cout << "Passenger 1's Information has been updated. \n\n";
+                                
+                                // Generate random flight details
+                                string flightNumber = generateFlightNumber();
+                                string departureTime = generateDepartureTime();
+                                double price = generatePrice();
+                                int receipt = generateReceiptNumber();
+                                
+                                // Flight object with details
+                                Flight randomFlight(flightNumber, "Indianapolis, IN", chosenDestination, departureTime, price, receipt);
+                                
+                                
+                                // Output booking details
+                                cout << "\nBooking Details:\n"
+                                     << Date << "  " << timeFormat << endl
+                                     << setw(93) << setfill('*') << "*" << endl
+                                     << "Flight Details:\n"
+                                     << "Receipt No. " << randomFlight.getReceipt() << endl
+                                     << "Flight Number: " << randomFlight.getFlightNumber() << "\t\t\t\t\tDeparture Time (24 hr): " << randomFlight.getDepartureTime() << " EST" << endl
+                                     << "Origin: " << randomFlight.getOrigin() << "\t\t\t\tDestination: " << randomFlight.getDestination() << endl
+                                     << "\nPrice per Passenger: $" << fixed << setprecision(2) << randomFlight.getPrice() << endl
+                                     << "State Tax: " << fixed << setprecision(0) << INDIANA_STATE_TAX * 100 << "%" << endl;
+                                
+                                
+                                // Start of Discount types
+                                if (discount == 'M' )
+                                {
+                                    // Formula to Calculate the total price with military discount
+                                    MilitaryDiscount = (MILITARY_DISCOUNT * totalPrice);
+                                    totalPrice = totalPrice - MilitaryDiscount;
+                                    
+                                    cout << "Discount Applied: Military: " << fixed << setprecision(0) << MILITARY_DISCOUNT * 100 << "%" << endl
+                                         << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                }
+                                
+                                else if (discount == 'S')
+                                {
+                                    // Formula to Calculate the total price with student discount
+                                    StudentDiscount = (STUDENT_DISCOUNT * totalPrice);
+                                    totalPrice = totalPrice - StudentDiscount;
+                                    
+                                    
+                                    cout << "Discount Applied: Student: " << fixed << setprecision(0) << STUDENT_DISCOUNT * 100 << "%" << endl
+                                         << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                }
+                                
+                                else if (discount == 'D')
+                                {
+                                    // Formula to Calculate the total price with senior discount
+                                    SeniorCitizenDiscount = (SENIOR_DISCOUNT * totalPrice);
+                                    totalPrice = totalPrice - SeniorCitizenDiscount;
+                                    
+                                    cout << "Discount Applied: Senior Citizen (Age 65 & up): " << fixed << setprecision(0) << SENIOR_DISCOUNT * 100 << "%" << endl
+                                         << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                }
+                                
+                                // If there's no dicount to apply
+                                else
+                                {
+                                    cout << "Total Price: $" << totalPrice << endl;
+                                }
+                                
+                                
+                                // Output passenger details
+                                // Main Passenger's Informations
+                                cout << "\n\nPassenger Details:\n"
+                                     << "Passenger 1:\n"
+                                     << "Name: " << name << endl
+                                     << "Age: " << age << endl
+                                     << "Date of Birth (MM / DD / YYYY): " << DateOfBirth << endl
+                                     << "Contact Number: " << contactNumber << endl
+                                     << "Email Address: " << emailAD << endl;
+                                
+                                
+                                // Additional passengers
+                                if (numPassengers > 1)
+                                {
+                                    for (int i = 0; i < passengers.size(); ++i)
+                                    {
+                                        cout << "\nPassenger " << (i + 2) << ":\n"
+                                             << "Name: " << passengers[i].getName() << endl
+                                             << "Age: " << passengers[i].getAge() << endl
+                                             << "Date of Birth (MM / DD / YYYY): " << passengers[i].getDateOfBirth() << endl;
+                                    }
+                                }
+                                
+                                cout << setw(93) << setfill('*') << "*" << endl << endl;
+                                
+                                cout << "Are the informations above accurate? (Y: yes & N: no): ";
+                                cin >> validateInformation;
+                                
+                                validateInformation = toupper(validateInformation);
+                                
+                                    // Input Validation
+                                    while (cin.fail() || validateInformation != 'Y' && validateInformation != 'N')
+                                    {
+                                        cin.clear();
+                                        cin.ignore();
+                                        cout << "\nInvalid Choice. Please enter either Y for yes and N for no. \n"
+                                             << "Are the informations above accurate?: ";
+                                        cin >> validateInformation;
+                                        
+                                        validateInformation = toupper(validateInformation);
+                                    }
+                                
+                                
+                                
+                                if (validateInformation == 'Y')
+                                {
+                                    // a file stream for writing
+                                    ofstream outputFile(name + "_Booking_Details.txt");
+
+                                    if (outputFile.is_open())
+                                    {
+                                        // Write booking details to the file
+                                        outputFile << "Booking Details:\n"
+                                                   << Date << "  " << timeFormat << endl
+                                                   << setw(93) << setfill('*') << "*" << endl
+                                                   << "Flight Details:\n"
+                                                   << "Receipt No. " << randomFlight.getReceipt() << endl
+                                                   << "Flight Number: " << randomFlight.getFlightNumber() << "\t\t\t\t\tDeparture Time (24 hr): " << randomFlight.getDepartureTime() << " EST" << endl
+                                                   << "Origin: " << randomFlight.getOrigin() << "\t\t\t\tDestination: " << randomFlight.getDestination() << endl
+                                                   << "\nPrice per Passenger: $" << fixed << setprecision(2) << randomFlight.getPrice() << endl
+                                                   << "State Tax: " << fixed << setprecision(0) << INDIANA_STATE_TAX * 100 << "%" << endl;
+
+                                        
+                                        // Start of Discount types
+                                        if (discount == 'M')
+                                        {
+                                            // Write military discount details
+                                            outputFile << "Discount Applied: Military: " << fixed << setprecision(0) << MILITARY_DISCOUNT * 100 << "%" << endl
+                                                       << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                        }
+                                        
+                                        else if (discount == 'S')
+                                        {
+                                            // Write student discount details
+                                            outputFile << "Discount Applied: Student: " << fixed << setprecision(0) << STUDENT_DISCOUNT * 100 << "%" << endl
+                                                       << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                        }
+                                        
+                                        else if (discount == 'D')
+                                        {
+                                            // Write senior citizen discount details
+                                            outputFile << "Discount Applied: Senior Citizen (Age 65 & up): " << fixed << setprecision(0) << SENIOR_DISCOUNT * 100 << "%" << endl
+                                                       << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                        }
+                                        
+                                        else
+                                        {
+                                            // Write total price without discount
+                                            outputFile << "Total Price: $" << totalPrice << endl;
+                                        }
+
+                                        // Write passenger details
+                                        // Main Passenger's Information
+                                        outputFile << "\n\nPassenger Details:\n"
+                                                   << "Passenger 1:\n"
+                                                   << "Name: " << name << endl
+                                                   << "Age: " << age << endl
+                                                   << "Date of Birth (MM / DD / YYYY): " << DateOfBirth << endl
+                                                   << "Contact Number: " << contactNumber << endl
+                                                   << "Email Address: " << emailAD << endl;
+
+                                        // Additional passengers
+                                        if (numPassengers > 1)
+                                        {
+                                            for (int i = 0; i < passengers.size(); ++i)
+                                            {
+                                                // Write additional passenger details
+                                                outputFile << "\nPassenger " << (i + 2) << ":\n"
+                                                           << "Name: " << passengers[i].getName() << endl
+                                                           << "Age: " << passengers[i].getAge() << endl
+                                                           << "Date of Birth (MM / DD / YYYY): " << passengers[i].getDateOfBirth() << endl;
+                                            }
+                                        }
+
+                                        outputFile << setw(93) << setfill('*') << "*" << endl << endl;
+
+                                        // Close the output file
+                                        outputFile.close();
+
+                                        cout << "\nBooking details have been written to " << name << "_Booking_Details.txt for Mr/Ms/Mrs." << name << endl
+                                             << "Thank you for choosing us and we'll see you again!\n";
+                                    }
+                                    
+                                    else
+                                    {
+                                        cout << "Unable to open file for writing." << endl;
+                                    }
+                                    
+                                    
+                                    continue;
+                                    
+                                }
+                                
+                                break;
+                            }
+                                
+                            
+                            case 2:
+                            {
+                                // Displaying current passenger information
+                                cout << "\nCurrent Passengers Information:" << endl;
+                                
+                                for (int i = 0; i < passengers.size(); ++i)
+                                {
+                                    cout << "\nPassenger " << (i + 1) << ":\n"
+                                         << "Name: " << passengers[i].getName() << endl
+                                         << "Age: " << passengers[i].getAge() << endl
+                                         << "Date of Birth (MM / DD / YYYY): " << passengers[i].getDateOfBirth() << endl;
+                                }
+
+                                // Choose the passenger number to change the information
+                                int passengerNum;
+                                cout << "\nChoose the passenger number that you want to change the information: ";
+                                cin >> passengerNum;
+                                cin.ignore(); // Clear input buffer
+
+                                if (passengerNum < 1 || passengerNum > numPassengers)
+                                {
+                                    cout << "Invalid choice. Please enter a number between 1 and " << numPassengers << "." << endl;
+                                    return 1; // or handle the error appropriately
+                                }
+
+                                cout << "\nPassenger #" << passengerNum << endl;
+
+                                passengerNum = passengerNum - 1; // Adjust to vector index
+
+                                // Temporary variables to store the new information
+                                string newName;
+                                string newDOB;
+                                int newAge;
+
+                                cout << "Enter new First and Last Name: ";
+                                getline(cin, newName);
+                            
+                                cout << "Enter new Date of Birth (MM / DD / YYYY): ";
+                                getline(cin, newDOB);
+                            
+                                cout << "Enter new Age: ";
+                                cin >> newAge;
+
+                                // Update the information for the selected passenger
+                                passengers[passengerNum].setName(newName);
+                                passengers[passengerNum].setDateOfBirth(newDOB);
+                                passengers[passengerNum].setAge(newAge);
+
+                                // Displaying updated information
+                                cout << "\nUpdated Information for Passenger #" << (passengerNum + 1) << ":\n";
+                                cout << "Name: " << passengers[passengerNum].getName() << endl;
+                                cout << "Date of Birth (MM / DD / YYYY): " << passengers[passengerNum].getDateOfBirth() << endl;
+                                cout << "Age: " << passengers[passengerNum].getAge() << endl;
+
+                            
+                                // Generate random flight details
+                                string flightNumber = generateFlightNumber();
+                                string departureTime = generateDepartureTime();
+                                double price = generatePrice();
+                                int receipt = generateReceiptNumber();
+                                
+                                // Flight object with details
+                                Flight randomFlight(flightNumber, "Indianapolis, IN", chosenDestination, departureTime, price, receipt);
+                                
+                                
+                                // Output booking details
+                                cout << "\nBooking Details:\n"
+                                     << Date << "  " << timeFormat << endl
+                                     << setw(93) << setfill('*') << "*" << endl
+                                     << "Flight Details:\n"
+                                     << "Receipt No. " << randomFlight.getReceipt() << endl
+                                     << "Flight Number: " << randomFlight.getFlightNumber() << "\t\t\t\t\tDeparture Time (24 hr): " << randomFlight.getDepartureTime() << " EST" << endl
+                                     << "Origin: " << randomFlight.getOrigin() << "\t\t\t\tDestination: " << randomFlight.getDestination() << endl
+                                     << "\nPrice per Passenger: $" << fixed << setprecision(2) << randomFlight.getPrice() << endl
+                                     << "State Tax: " << fixed << setprecision(0) << INDIANA_STATE_TAX * 100 << "%" << endl;
+                                
+                                
+                                // Start of Discount types
+                                if (discount == 'M' )
+                                {
+                                    // Formula to Calculate the total price with military discount
+                                    MilitaryDiscount = (MILITARY_DISCOUNT * totalPrice);
+                                    totalPrice = totalPrice - MilitaryDiscount;
+                                    
+                                    cout << "Discount Applied: Military: " << fixed << setprecision(0) << MILITARY_DISCOUNT * 100 << "%" << endl
+                                         << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                }
+                                
+                                else if (discount == 'S')
+                                {
+                                    // Formula to Calculate the total price with student discount
+                                    StudentDiscount = (STUDENT_DISCOUNT * totalPrice);
+                                    totalPrice = totalPrice - StudentDiscount;
+                                    
+                                    
+                                    cout << "Discount Applied: Student: " << fixed << setprecision(0) << STUDENT_DISCOUNT * 100 << "%" << endl
+                                         << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                }
+                                
+                                else if (discount == 'D')
+                                {
+                                    // Formula to Calculate the total price with senior discount
+                                    SeniorCitizenDiscount = (SENIOR_DISCOUNT * totalPrice);
+                                    totalPrice = totalPrice - SeniorCitizenDiscount;
+                                    
+                                    cout << "Discount Applied: Senior Citizen (Age 65 & up): " << fixed << setprecision(0) << SENIOR_DISCOUNT * 100 << "%" << endl
+                                         << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                }
+                                
+                                // If there's no dicount to apply
+                                else
+                                {
+                                    cout << "Total Price: $" << totalPrice << endl;
+                                }
+                                
+                                
+                                // Output passenger details
+                                // Main Passenger's Informations
+                                cout << "\n\nPassenger Details:\n"
+                                     << "Passenger 1:\n"
+                                     << "Name: " << name << endl
+                                     << "Age: " << age << endl
+                                     << "Date of Birth (MM / DD / YYYY): " << DateOfBirth << endl
+                                     << "Contact Number: " << contactNumber << endl
+                                     << "Email Address: " << emailAD << endl;
+                                
+                                
+                                // Additional passengers
+                                if (numPassengers > 1)
+                                {
+                                    for (int i = 0; i < passengers.size(); ++i)
+                                    {
+                                        cout << "\nPassenger " << (i + 2) << ":\n"
+                                             << "Name: " << passengers[i].getName() << endl
+                                             << "Age: " << passengers[i].getAge() << endl
+                                             << "Date of Birth (MM / DD / YYYY): " << passengers[i].getDateOfBirth() << endl;
+                                    }
+                                }
+                                
+                                cout << setw(93) << setfill('*') << "*" << endl << endl;
+                                
+                                
+                                cout << "Are the informations above accurate? (Y: yes & N: no): ";
+                                cin >> validateInformation;
+                                
+                                validateInformation = toupper(validateInformation);
+                                
+                                    // Input Validation
+                                    while (cin.fail() || validateInformation != 'Y' && validateInformation != 'N')
+                                    {
+                                        cin.clear();
+                                        cin.ignore();
+                                        cout << "\nInvalid Choice. Please enter either Y for yes and N for no. \n"
+                                             << "Are the informations above accurate?: ";
+                                        cin >> validateInformation;
+                                        
+                                        validateInformation = toupper(validateInformation);
+                                    }
+                                
+                                
+                                
+                                if (validateInformation == 'Y')
+                                {
+                                    
+                                    // a file stream for writing
+                                    ofstream outputFile(name + "_Booking_Details.txt");
+
+                                    if (outputFile.is_open())
+                                    {
+                                        // Write booking details to the file
+                                        outputFile << "Booking Details:\n"
+                                                   << Date << "  " << timeFormat << endl
+                                                   << setw(93) << setfill('*') << "*" << endl
+                                                   << "Flight Details:\n"
+                                                   << "Receipt No. " << randomFlight.getReceipt() << endl
+                                                   << "Flight Number: " << randomFlight.getFlightNumber() << "\t\t\t\t\tDeparture Time (24 hr): " << randomFlight.getDepartureTime() << " EST" << endl
+                                                   << "Origin: " << randomFlight.getOrigin() << "\t\t\t\tDestination: " << randomFlight.getDestination() << endl
+                                                   << "\nPrice per Passenger: $" << fixed << setprecision(2) << randomFlight.getPrice() << endl
+                                                   << "State Tax: " << fixed << setprecision(0) << INDIANA_STATE_TAX * 100 << "%" << endl;
+
+                                        
+                                        // Start of Discount types
+                                        if (discount == 'M')
+                                        {
+                                            // Write military discount details
+                                            outputFile << "Discount Applied: Military: " << fixed << setprecision(0) << MILITARY_DISCOUNT * 100 << "%" << endl
+                                                       << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                        }
+                                        
+                                        else if (discount == 'S')
+                                        {
+                                            // Write student discount details
+                                            outputFile << "Discount Applied: Student: " << fixed << setprecision(0) << STUDENT_DISCOUNT * 100 << "%" << endl
+                                                       << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                        }
+                                        
+                                        else if (discount == 'D')
+                                        {
+                                            // Write senior citizen discount details
+                                            outputFile << "Discount Applied: Senior Citizen (Age 65 & up): " << fixed << setprecision(0) << SENIOR_DISCOUNT * 100 << "%" << endl
+                                                       << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                        }
+                                        
+                                        else
+                                        {
+                                            // Write total price without discount
+                                            outputFile << "Total Price: $" << totalPrice << endl;
+                                        }
+
+                                        // Write passenger details
+                                        // Main Passenger's Information
+                                        outputFile << "\n\nPassenger Details:\n"
+                                                   << "Passenger 1:\n"
+                                                   << "Name: " << name << endl
+                                                   << "Age: " << age << endl
+                                                   << "Date of Birth (MM / DD / YYYY): " << DateOfBirth << endl
+                                                   << "Contact Number: " << contactNumber << endl
+                                                   << "Email Address: " << emailAD << endl;
+
+                                        // Additional passengers
+                                        if (numPassengers > 1)
+                                        {
+                                            for (int i = 0; i < passengers.size(); ++i)
+                                            {
+                                                // Write additional passenger details
+                                                outputFile << "\nPassenger " << (i + 2) << ":\n"
+                                                           << "Name: " << passengers[i].getName() << endl
+                                                           << "Age: " << passengers[i].getAge() << endl
+                                                           << "Date of Birth (MM / DD / YYYY): " << passengers[i].getDateOfBirth() << endl;
+                                            }
+                                        }
+
+                                        outputFile << setw(93) << setfill('*') << "*" << endl << endl;
+
+                                        // Close the output file
+                                        outputFile.close();
+
+                                        cout << "\nBooking details have been written to " << name << "_Booking_Details.txt for Mr/Ms/Mrs." << name << endl
+                                             << "Thank you for choosing us and we'll see you again!\n";
+                                    }
+                                    
+                                    else
+                                    {
+                                        cout << "Unable to open file for writing." << endl;
+                                    }
+                                    
+                                    
+                                    continue;
+                                }
+                                
+                                break;
+                            }
+
+                                
+                                
+                                
+                                
+                            case 3:
+                            {
+                                cout << "International or Domestic Flight? (0 for International and 1 for Domestic): ";
+                                cin >> TypeFlight;
+                                
+                                
+                                // Input Validation
+                                while (cin.fail() || TypeFlight != 0 && TypeFlight != 1)
+                                {
+                                    cin.clear();
+                                    cin.ignore();
+                                    cout << "\nInvalid Choice. Please enter the number you want. \n"
+                                         << "International or Domestic Flight? (0 for International and 1 for Domestic): ";
+                                    cin >> TypeFlight;
+                                }
+                                
+                                
+                                switch (TypeFlight)
+                                {
+                                    case 0:
+                                    {
+                                        cout << "\nInternational Flights: \n"
+                                             << "Please choose the number of the flight you want: \n"
+                                             << "1. Indianapolis, IN to Tokyo, Japan \n"
+                                             << "2. Indianapolis, IN to Manila, Philippines \n"
+                                             << "3. Indianapolis, IN to Paris, France \n"
+                                             << "4. Indianapolis, IN to Seoul, South Korea \n"
+                                             << "5. Indianapolis, IN to Portofino, Italy \n"
+                                             << "6. Indianapolis, IN to Berlin, Germany \n"
+                                             << "Choice #: ";
+                                        cin >> destination;
+                                        
+                                        
+                                        // Input Validation
+                                        while (cin.fail() || destination < 1 && destination > 6)
+                                        {
+                                            cin.clear();
+                                            cin.ignore();
+                                            cout << "\nInvalid value. Please try again... \n\n";
+                                            cout << "International Flights: \n"
+                                                 << "Please choose the number of the flight you want: \n"
+                                                 << "1. Indianapolis, IN to Tokyo, Japan \n"
+                                                 << "2. Indianapolis, IN to Manila, Philippines \n"
+                                                 << "3. Indianapolis, IN to Paris, France \n"
+                                                 << "4. Indianapolis, IN to Seoul, South Korea \n"
+                                                 << "5. Indianapolis, IN to Portofino, Italy \n"
+                                                 << "6. Indianapolis, IN to Berlin, Germany \n"
+                                                 << "Choice #: ";
+                                            cin >> destination;
+                                            
+                                        }
+                                        
+                                        
+                                        switch (destination)
+                                        {
+                                            case 1:
+                                                chosenDestination = "Tokyo, Japan";
+                                                break;
+                                                
+                                            case 2:
+                                                chosenDestination = "Manila, Philippines";
+                                                break;
+                                                
+                                            case 3:
+                                                chosenDestination = "Paris, France";
+                                                break;
+                                                
+                                            case 4:
+                                                chosenDestination = "Seoul, South Korea";
+                                                break;
+                                                
+                                            case 5:
+                                                chosenDestination = "Portofino, Italy";
+                                                break;
+                                                
+                                            case 6:
+                                                chosenDestination = "Berlin, Germany";
+                                                break;
+                                                
+                                            default:
+                                                cout << "\nInvalid Choice. \n\n";
+                                                break;
+                                        }
+                                        break;
+                                        
+                                    }
+                                        
+                                        
+                                        
+                                    case 1:
+                                    {
+                                        cout << "\nDomestic Flights: \n"
+                                             << "Please choose the number of the flight you want: \n"
+                                             << "1. Indianapolis, IN to Los Angeles, CA \n"
+                                             << "2. Indianapolis, IN to San Francisco, CA \n"
+                                             << "3. Indianapolis, IN to New York City, NY \n"
+                                             << "4. Indianapolis, IN to Miami, Florida \n"
+                                             << "5. Indianapolis, IN to Honolulu, HI \n"
+                                             << "Choice #: ";
+                                        cin >> destination;
+                                        
+                                        
+                                        // Input Validation
+                                        while (cin.fail() || destination < 0 && destination > 5)
+                                        {
+                                            cin.clear();
+                                            cin.ignore();
+                                            cout << "\nInvalid value. Please try again... \n\n"
+                                                 << "\nDomestic Flights: \n"
+                                                 << "Please choose the number of the flight you want: \n"
+                                                 << "1. Indianapolis, IN to Los Angeles, CA \n"
+                                                 << "2. Indianapolis, IN to San Francisco, CA \n"
+                                                 << "3. Indianapolis, IN to New York City, NY \n"
+                                                 << "4. Indianapolis, IN to Miami, Florida \n"
+                                                 << "5. Indianapolis, IN to Honolulu, HI \n"
+                                                 << "Choice #: ";
+                                            cin >> destination;
+                                            
+                                        }
+                                        
+                                        
+                                        switch (destination)
+                                        {
+                                            case 1:
+                                                chosenDestination = "Los Angeles, CA ";
+                                                break;
+                                                
+                                            case 2:
+                                                chosenDestination = "San Francisco, CA";
+                                                break;
+                                                
+                                            case 3:
+                                                chosenDestination = "New York City, NY";
+                                                break;
+                                                
+                                            case 4:
+                                                chosenDestination = "Miami, Florida";
+                                                break;
+                                                
+                                            case 5:
+                                                chosenDestination = "Honolulu, HI";
+                                                break;
+                                                
+                                            default:
+                                                cout << "\nInvalid Choice. \n\n";
+                                                break;
+                                        }
+                                        
+                                    }
+                                        
+                                        
+                                }
+                                
+                                
+                                // Generate random flight details
+                                string flightNumber = generateFlightNumber();
+                                string departureTime = generateDepartureTime();
+                                double price = generatePrice();
+                                int receipt = generateReceiptNumber();
+                                
+                                // Flight object with details
+                                Flight randomFlight(flightNumber, "Indianapolis, IN", chosenDestination, departureTime, price, receipt);
+                                
+                                
+                                // Output booking details
+                                cout << "\nBooking Details:\n"
+                                     << Date << "  " << timeFormat << endl
+                                     << setw(93) << setfill('*') << "*" << endl
+                                     << "Flight Details:\n"
+                                     << "Receipt No. " << randomFlight.getReceipt() << endl
+                                     << "Flight Number: " << randomFlight.getFlightNumber() << "\t\t\t\t\tDeparture Time (24 hr): " << randomFlight.getDepartureTime() << " EST" << endl
+                                     << "Origin: " << randomFlight.getOrigin() << "\t\t\t\tDestination: " << randomFlight.getDestination() << endl
+                                     << "\nPrice per Passenger: $" << fixed << setprecision(2) << randomFlight.getPrice() << endl
+                                     << "State Tax: " << fixed << setprecision(0) << INDIANA_STATE_TAX * 100 << "%" << endl;
+                                
+                                // Start of Discount types
+                                if (discount == 'M' )
+                                {
+                                    // Formula to Calculate the total price with military discount
+                                    MilitaryDiscount = (MILITARY_DISCOUNT * totalPrice);
+                                    totalPrice = totalPrice - MilitaryDiscount;
+                                    
+                                    cout << "Discount Applied: Military: " << fixed << setprecision(0) << MILITARY_DISCOUNT * 100 << "%" << endl
+                                         << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                }
+                                
+                                else if (discount == 'S')
+                                {
+                                    // Formula to Calculate the total price with student discount
+                                    StudentDiscount = (STUDENT_DISCOUNT * totalPrice);
+                                    totalPrice = totalPrice - StudentDiscount;
+                                    
+                                    
+                                    cout << "Discount Applied: Student: " << fixed << setprecision(0) << STUDENT_DISCOUNT * 100 << "%" << endl
+                                         << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                }
+                                
+                                else if (discount == 'D')
+                                {
+                                    // Formula to Calculate the total price with senior discount
+                                    SeniorCitizenDiscount = (SENIOR_DISCOUNT * totalPrice);
+                                    totalPrice = totalPrice - SeniorCitizenDiscount;
+                                    
+                                    cout << "Discount Applied: Senior Citizen (Age 65 & up): " << fixed << setprecision(0) << SENIOR_DISCOUNT * 100 << "%" << endl
+                                         << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                }
+                                
+                                // If there's no dicount to apply
+                                else
+                                {
+                                    cout << "Total Price: $" << totalPrice << endl;
+                                }
+                                
+                                
+                                // Output passenger details
+                                // Main Passenger's Informations
+                                cout << "\n\nPassenger Details:\n"
+                                     << "Passenger 1:\n"
+                                     << "Name: " << name << endl
+                                     << "Age: " << age << endl
+                                     << "Date of Birth (MM / DD / YYYY): " << DateOfBirth << endl
+                                     << "Contact Number: " << contactNumber << endl
+                                     << "Email Address: " << emailAD << endl;
+                                
+                                
+                                // Additional passengers
+                                if (numPassengers > 1)
+                                {
+                                    for (int i = 0; i < passengers.size(); ++i)
+                                    {
+                                        cout << "\nPassenger " << (i + 2) << ":\n"
+                                             << "Name: " << passengers[i].getName() << endl
+                                             << "Age: " << passengers[i].getAge() << endl
+                                             << "Date of Birth (MM / DD / YYYY): " << passengers[i].getDateOfBirth() << endl;
+                                    }
+                                }
+                                
+                                cout << setw(93) << setfill('*') << "*" << endl << endl;
+                                
+                                
+                                cout << "Are the informations above accurate? (Y: yes & N: no): ";
+                                cin >> validateInformation;
+                                
+                                validateInformation = toupper(validateInformation);
+                                
+                                // Input Validation
+                                while (cin.fail() || validateInformation != 'Y' && validateInformation != 'N')
+                                {
+                                    cin.clear();
+                                    cin.ignore();
+                                    cout << "\nInvalid Choice. Please enter either Y for yes and N for no. \n"
+                                         << "Are the informations above accurate?: ";
+                                    cin >> validateInformation;
+                                    
+                                    validateInformation = toupper(validateInformation);
+                                }
+                                
+                                
+                                
+                                if (validateInformation == 'Y')
+                                {
+                                    
+                                    // a file stream for writing
+                                    ofstream outputFile(name + "_Booking_Details.txt");
+
+                                    if (outputFile.is_open())
+                                    {
+                                        // Write booking details to the file
+                                        outputFile << "Booking Details:\n"
+                                                   << Date << "  " << timeFormat << endl
+                                                   << setw(93) << setfill('*') << "*" << endl
+                                                   << "Flight Details:\n"
+                                                   << "Receipt No. " << randomFlight.getReceipt() << endl
+                                                   << "Flight Number: " << randomFlight.getFlightNumber() << "\t\t\t\t\tDeparture Time (24 hr): " << randomFlight.getDepartureTime() << " EST" << endl
+                                                   << "Origin: " << randomFlight.getOrigin() << "\t\t\t\tDestination: " << randomFlight.getDestination() << endl
+                                                   << "\nPrice per Passenger: $" << fixed << setprecision(2) << randomFlight.getPrice() << endl
+                                                   << "State Tax: " << fixed << setprecision(0) << INDIANA_STATE_TAX * 100 << "%" << endl;
+
+                                        
+                                        // Start of Discount types
+                                        if (discount == 'M')
+                                        {
+                                            // Write military discount details
+                                            outputFile << "Discount Applied: Military: " << fixed << setprecision(0) << MILITARY_DISCOUNT * 100 << "%" << endl
+                                                       << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                        }
+                                        
+                                        else if (discount == 'S')
+                                        {
+                                            // Write student discount details
+                                            outputFile << "Discount Applied: Student: " << fixed << setprecision(0) << STUDENT_DISCOUNT * 100 << "%" << endl
+                                                       << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                        }
+                                        
+                                        else if (discount == 'D')
+                                        {
+                                            // Write senior citizen discount details
+                                            outputFile << "Discount Applied: Senior Citizen (Age 65 & up): " << fixed << setprecision(0) << SENIOR_DISCOUNT * 100 << "%" << endl
+                                                       << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                                        }
+                                        
+                                        else
+                                        {
+                                            // Write total price without discount
+                                            outputFile << "Total Price: $" << totalPrice << endl;
+                                        }
+
+                                        // Write passenger details
+                                        // Main Passenger's Information
+                                        outputFile << "\n\nPassenger Details:\n"
+                                                   << "Passenger 1:\n"
+                                                   << "Name: " << name << endl
+                                                   << "Age: " << age << endl
+                                                   << "Date of Birth (MM / DD / YYYY): " << DateOfBirth << endl
+                                                   << "Contact Number: " << contactNumber << endl
+                                                   << "Email Address: " << emailAD << endl;
+
+                                        // Additional passengers
+                                        if (numPassengers > 1)
+                                        {
+                                            for (int i = 0; i < passengers.size(); ++i)
+                                            {
+                                                // Write additional passenger details
+                                                outputFile << "\nPassenger " << (i + 2) << ":\n"
+                                                           << "Name: " << passengers[i].getName() << endl
+                                                           << "Age: " << passengers[i].getAge() << endl
+                                                           << "Date of Birth (MM / DD / YYYY): " << passengers[i].getDateOfBirth() << endl;
+                                            }
+                                        }
+
+                                        outputFile << setw(93) << setfill('*') << "*" << endl << endl;
+
+                                        // Close the output file
+                                        outputFile.close();
+
+                                        cout << "\nBooking details have been written to " << name << "_Booking_Details.txt for Mr/Ms/Mrs." << name << endl
+                                             << "Thank you for choosing us and we'll see you again!\n";
+                                    }
+                                    
+                                    else
+                                    {
+                                        cout << "Unable to open file for writing." << endl;
+                                    }
+                                    
+                                    
+                                    continue;
+                                    
+                                }
+                                
+                            }
+                                
+                                
+                        }
+                        
+                    } // end of else if (numPassengers > 1)
+                    
+                    
+                    
+                    
+                    
+                } // end of if (validateInformation == 'N')
+            
+                    
+                
+                    else if (validateInformation == 'Y')
+                    {
+                        
+                        // a file stream for writing
+                        ofstream outputFile(name + "_Booking_Details.txt");
+
+                        if (outputFile.is_open()) 
+                        {
+                            // Write booking details to the file
+                            outputFile << "Booking Details:\n"
+                                       << Date << "  " << timeFormat << endl
+                                       << setw(93) << setfill('*') << "*" << endl
+                                       << "Flight Details:\n"
+                                       << "Receipt No. " << randomFlight.getReceipt() << endl
+                                       << "Flight Number: " << randomFlight.getFlightNumber() << "\t\t\t\t\tDeparture Time (24 hr): " << randomFlight.getDepartureTime() << " EST" << endl
+                                       << "Origin: " << randomFlight.getOrigin() << "\t\t\t\tDestination: " << randomFlight.getDestination() << endl
+                                       << "\nPrice per Passenger: $" << fixed << setprecision(2) << randomFlight.getPrice() << endl
+                                       << "State Tax: " << fixed << setprecision(0) << INDIANA_STATE_TAX * 100 << "%" << endl;
+
+                            
+                            // Start of Discount types
+                            if (discount == 'M') 
+                            {
+                                // Write military discount details
+                                outputFile << "Discount Applied: Military: " << fixed << setprecision(0) << MILITARY_DISCOUNT * 100 << "%" << endl
+                                           << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                            }
+                            
+                            else if (discount == 'S')
+                            {
+                                // Write student discount details
+                                outputFile << "Discount Applied: Student: " << fixed << setprecision(0) << STUDENT_DISCOUNT * 100 << "%" << endl
+                                           << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                            }
+                            
+                            else if (discount == 'D')
+                            {
+                                // Write senior citizen discount details
+                                outputFile << "Discount Applied: Senior Citizen (Age 65 & up): " << fixed << setprecision(0) << SENIOR_DISCOUNT * 100 << "%" << endl
+                                           << "Total Price after Discount: $" << fixed << setprecision(2) << totalPrice << endl;
+                            }
+                            
+                            else
+                            {
+                                // Write total price without discount
+                                outputFile << "Total Price: $" << totalPrice << endl;
+                            }
+
+                            // Write passenger details
+                            // Main Passenger's Information
+                            outputFile << "\n\nPassenger Details:\n"
+                                       << "Passenger 1:\n"
+                                       << "Name: " << name << endl
+                                       << "Age: " << age << endl
+                                       << "Date of Birth (MM / DD / YYYY): " << DateOfBirth << endl
+                                       << "Contact Number: " << contactNumber << endl
+                                       << "Email Address: " << emailAD << endl;
+
+                            // Additional passengers
+                            if (numPassengers > 1) 
+                            {
+                                for (int i = 0; i < passengers.size(); ++i)
+                                {
+                                    // Write additional passenger details
+                                    outputFile << "\nPassenger " << (i + 2) << ":\n"
+                                               << "Name: " << passengers[i].getName() << endl
+                                               << "Age: " << passengers[i].getAge() << endl
+                                               << "Date of Birth (MM / DD / YYYY): " << passengers[i].getDateOfBirth() << endl;
+                                }
+                            }
+
+                            outputFile << setw(93) << setfill('*') << "*" << endl << endl;
+
+                            // Close the output file
+                            outputFile.close();
+
+                            cout << "\nBooking details have been written to " << name << "_Booking_Details.txt for Mr/Ms/Mrs." << name << endl
+                                 << "Thank you for choosing us and we'll see you again!\n";
+                        }
+                        
+                        else
+                        {
+                            cout << "Unable to open file for writing." << endl;
+                        }
+                        
+                        
+                        continue;
+                        
+                    }
+                  
+                    
+                } while (validateInformation == 'N');
+                
+                
+                break;
+                
+            }
+// *************************************************************** End of MenuChoice1 case 2 ***************************************************************
+                
+                
+// *************************************************************** MenuChoice1 case 3 ***************************************************************
+            case 3:
+            {
+                cout << "\nExclusive Flight Discounts: \n"
+                     << "- Military Discount (Active, Reserver, and Veteran): 15% \n"
+                     << "- Student Discount (Colleges and Universities): 5% \n"
+                     << "- Senior Citizen (People ages 65 and up): 15% \n\n"
+                     << "Please show your I.D. upon arrival at the check-in gates for proof. Thank you! \n"
+                     << "NOTE: Only 1 discount from the list would be applicable \n";
+                break;
+            }
+// *************************************************************** End MenuChoice1 case 3 ***************************************************************
+                
+                
+// *************************************************************** MenuChoice1 case 4 ***************************************************************
+            case 4:
+            {
+                cout << "\nRoutes available with Southwest Airlines: \n"
+                
+                     << "International Flights: \n"
+                     << "- Indianapolis, IN to Tokyo, Japan \n"
+                     << "- Indianapolis, IN to Manila, Philippines \n"
+                     << "- Indianapolis, IN to Paris, France \n"
+                     << "- Indianapolis, IN to Seoul, South Korea \n"
+                     << "- Indianapolis, IN to Portofino, Italy \n"
+                     << "- Indianapolis, IN to Berlin, Germany \n\n"
+                    
+                     << "Domestic Flights: \n"
+                     << "- Indianapolis, IN to Los Angeles, CA \n"
+                     << "- Indianapolis, IN to San Francisco, CA \n"
+                     << "- Indianapolis, IN to New York City, NY \n"
+                     << "- Indianapolis, IN to Miami, Florida \n"
+                     << "- Indianapolis, IN to Honolulu, HI \n";
+                break;
+            }
+// *************************************************************** End of MenuChoice1 case 4 ***************************************************************
+                
+                
+// *************************************************************** MenuChoice1 case 5 ***************************************************************
+            case 5:
+            {
+                cout << "\nThank you for flying with us! Bon Voyage! \n";
+                exit(0);
+                break;
+            }
+// *************************************************************** End of MenuChoice1 case 5 ***************************************************************
+        }
+        
+        
+    } while (MenuChoice1 != 5 || changeInfo == 4 );
+    
+    cout << endl << endl;
+    return 0;
+}
