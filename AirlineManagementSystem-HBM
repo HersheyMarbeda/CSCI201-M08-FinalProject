@@ -302,7 +302,6 @@ int main()
     // Format the current time
     char timeFormat[10];
     strftime(timeFormat, sizeof(timeFormat), "%H:%M", localTime);
-
     // ******************************************************************* End of "To Format the Date" ***********************************************************
     
     
