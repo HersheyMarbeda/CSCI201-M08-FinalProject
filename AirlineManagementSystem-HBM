@@ -2375,7 +2375,7 @@ int main()
             case 3:
             {
                 cout << "\nExclusive Flight Discounts: \n"
-                     << "- Military Discount (Active, Reserver, and Veteran): 15% \n"
+                     << "- Military Discount (Active, Reserve, and Veteran): 15% \n"
                      << "- Student Discount (Colleges and Universities): 5% \n"
                      << "- Senior Citizen (People ages 65 and up): 15% \n\n"
                      << "Please show your I.D. upon arrival at the check-in gates for proof. Thank you! \n"
