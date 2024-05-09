@@ -1,7 +1,7 @@
 /**************************************************************************
  *   Program Name: Airline Management System (Final Project)              *
  *   Author Name: Hershey Marbeda                                         *
- *   Last Date Updated: 05.08.2024                                        *
+ *   Last Date Updated: 05.09.2024                                        *
  *                                                                        *
  *   Instructor: Dr. Steve Carver                                         *
  *   Course: CSCI 201: Computer Science II                                *
@@ -30,7 +30,7 @@ const double SENIOR_DISCOUNT = 0.15;
 const double INDIANA_STATE_TAX = 0.07;
 
 // Function to generate a random flight status
-string generateFlightStatus() 
+string generateFlightStatus()
 {
     //Flight statuses
     string statuses[] = {"On Time", "Delayed", "Boarding", "Departed", "Arrived"};
@@ -781,20 +781,18 @@ int main()
                         cout << "\nWhich one would you like to change?: \n"
                              << "1. Passenger 1's Informations \n"
                              << "2. Destination \n"
-                             << "3. Start Over \n"
                              << "Choice #: ";
                         cin >> changeInfo;
                         
                         
                             // Input Validation
-                            while (cin.fail() || changeInfo < 1 || changeInfo > 3)
+                            while (cin.fail() || changeInfo < 1 && changeInfo > 2)
                             {
                                 cin.clear();
                                 cin.ignore();
                                 cout << "\nInvalid Choice. Please enter the number you want to change. \n"
                                 << "1. Passenger 1's Informations \n"
                                 << "2. Destination \n"
-                                << "3. Start Over \n"
                                 << "Choice #: ";
                                 cin >> changeInfo;
                             }
@@ -1399,6 +1397,7 @@ int main()
                                 break;
                             }
                                 
+                                
                             default:
                                 cout << "\nInvalid Choice.";
                                 break;
@@ -1415,13 +1414,12 @@ int main()
                              << "1. Passenger 1's Informations \n"
                              << "2. Additional Passenger \n"
                              << "3. Destination \n"
-                             << "4. Start Over \n"
                              << "Choice #: ";
                         cin >> changeInfo;
                         
                         
                         // Input Validation
-                        while (cin.fail() || changeInfo < 1 && changeInfo > 4)
+                        while (cin.fail() || changeInfo < 1 && changeInfo > 3)
                         {
                             cin.clear();
                             cin.ignore();
@@ -1429,7 +1427,6 @@ int main()
                                  << "1. Passenger 1's Informations \n"
                                  << "2. Additional Passenger \n"
                                  << "3. Destination \n"
-                                 << "4. Start Over \n"
                                  << "Choice #: ";
                             cin >> changeInfo;
                          }
@@ -1966,10 +1963,7 @@ int main()
                             }
 
                                 
-                                
-                                
-                                
-                            case 3:
+                        case 3:
                             {
                                 cout << "International or Domestic Flight? (0 for International and 1 for Domestic): ";
                                 cin >> TypeFlight;
@@ -2322,6 +2316,7 @@ int main()
                                 
                             }
                                 
+                           //case 4
                                 
                         }
                         
@@ -2341,7 +2336,7 @@ int main()
                         // a file stream for writing
                         ofstream outputFile(name + "_Booking_Details.txt");
 
-                        if (outputFile.is_open()) 
+                        if (outputFile.is_open())
                         {
                             // Write booking details to the file
                             outputFile << "Booking Details:\n"
@@ -2357,7 +2352,7 @@ int main()
 
                             
                             // Start of Discount types
-                            if (discount == 'M') 
+                            if (discount == 'M')
                             {
                                 // Write military discount details
                                 outputFile << "Discount Applied: Military: " << fixed << setprecision(0) << MILITARY_DISCOUNT * 100 << "%" << endl
@@ -2395,7 +2390,7 @@ int main()
                                        << "Email Address: " << emailAD << endl;
 
                             // Additional passengers
-                            if (numPassengers > 1) 
+                            if (numPassengers > 1)
                             {
                                 for (int i = 0; i < passengers.size(); ++i)
                                 {
