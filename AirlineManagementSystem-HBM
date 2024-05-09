@@ -18,6 +18,8 @@
 #include <string>
 #include <stdexcept>
 #include <fstream>
+#include <regex> // For text search (Flight Number)
+
 
 using namespace std;
 
@@ -269,11 +271,15 @@ int main()
     vector<PersonalInformation> passengers;
 
     // Declaration of Local Variables
-    double totalPrice = 0.0, MilitaryDiscount = 0.0, IndianaStateTax = 0.0, StudentDiscount = 0.0, SeniorCitizenDiscount = 0.0;
+    double totalPrice = 0.0, MilitaryDiscount = 0.0, IndianaStateTax = 0.0, 
+           StudentDiscount = 0.0, SeniorCitizenDiscount = 0.0;
     int MenuChoice1, age = 0, TypeFlight, destination, numPassengers = 0, changeInfo = 0, FlightStatusNumber = 0;
-    string name, DateOfBirth, contactNumber, chosenDestination = " ", emailAD, flightNumber;
+    string name, DateOfBirth, contactNumber, chosenDestination = " ",
+           emailAD, flightNumber, GateNumber;
     char discount, validateInformation;
     
+   
+   
     // Table Heading
     cout << setw(85) << setfill('*') << "*" << endl
          << "\t\t\t\t\t\tAirline Reservation Management System " << endl
@@ -302,6 +308,7 @@ int main()
     // Format the current time
     char timeFormat[10];
     strftime(timeFormat, sizeof(timeFormat), "%H:%M", localTime);
+
     // ******************************************************************* End of "To Format the Date" ***********************************************************
     
     
@@ -340,24 +347,32 @@ int main()
 // *************************************************************** MenuChoice1 case 1 ***************************************************************
             case 1:
             {
-                srand(time(nullptr));
-                
-                // Generate a random flight status
-                string randomFlightStatus = generateFlightStatus();
-                int GateNumber = 0;
-                
-                GateNumber = rand() % 36  ;
-                
-                cout << "\nFlight Status: \n"
-                     << "Enter the Flight Number: PR ";
-                cin >> FlightStatusNumber;
-                
-                cout << "\nFlight Status for Receipt PR " << FlightStatusNumber << ": " << randomFlightStatus
-                     << "\nGate No. " << GateNumber << endl << endl;
+              srand(time(nullptr));
 
+              string FlightStatusNumber;
+                
+              cout << "\nFlight Status: \n"
+                   << "Enter the Flight Number: PR  ";
+              cin >> FlightStatusNumber;
+
+                   // Input validation
+                   while (FlightStatusNumber.length() != 3 || !isdigit(FlightStatusNumber[0]) || !isdigit(FlightStatusNumber[1]) || !isdigit(FlightStatusNumber[2]))
+                   {
+                       cout << "\nInvalid input. \n"
+                            << "Please enter a valid flight number consisting of three digits: ";
+                       cin >> FlightStatusNumber;
+                   }
+
+               // Generate a random flight status and gate number
+               string randomFlightStatus = generateFlightStatus();
+               GateNumber = rand() % 36;
+
+               cout << "\nFlight Status for Receipt PR " << FlightStatusNumber << ": " << randomFlightStatus
+                    << "\nGate No. " << GateNumber << endl << endl;
                 
                 break;
             }
+                
 // *************************************************************** MenuChoice1 case 1 ***************************************************************
                 
 // *************************************************************** MenuChoice1 case 2 ***************************************************************
@@ -2402,10 +2417,18 @@ int main()
                 break;
             }
 // *************************************************************** End of MenuChoice1 case 5 ***************************************************************
+                
+            
         }
         
         
     } while (MenuChoice1 != 5 || changeInfo == 4 );
+    
+    
+
+    
+    
+    
     
     cout << endl << endl;
     return 0;
